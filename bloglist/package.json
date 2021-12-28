@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "local:dev": "nodemon index.js",
-    "test": "jest --verbose",
+    "start": "NODE_ENV=production node index.js",
+    "local:dev": "NODE_ENV=development nodemon index.js",
+    "test": "NODE_ENV=test jest --watchAll --detectOpenHandles --runInBand",
     "lint": "eslint ."
   },
   "keywords": [],
@@ -14,7 +14,8 @@
   "license": "ISC",
   "devDependencies": {
     "jest": "^27.2.5",
-    "nodemon": "^2.0.13"
+    "nodemon": "^2.0.13",
+    "supertest": "^6.1.6"
   },
   "dependencies": {
     "cors": "^2.8.5",

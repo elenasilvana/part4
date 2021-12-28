@@ -1,5 +1,5 @@
 const { dummy, totalLikes, favoriteBlog, mostBlogs, mostLikes } = require('../utils/list_helper');
-const { blogs } = require('./utils/mockData')
+const { blogs } = require('./utils/mockData');
 
 test('dummy returns one', () => {
   const blogs = [];
