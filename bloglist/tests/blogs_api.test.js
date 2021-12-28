@@ -39,9 +39,9 @@ describe('content of returned objects', () => {
     })
     
     test('the first blog is about React Patterns', async () => {
-        const response = await api.get('/api/blogs')
+        const response = await helper.blogsInDb()
     
-        expect(response.body[0].title).toBe('React patterns')
+        expect(response[0].title).toBe('React patterns')
     })
 })
 
@@ -99,17 +99,47 @@ describe('create new blogs', () => {
         .post('/api/blogs')
         .send(newBlog)
         .expect(400)
-    }, 10000)
+    })
 });
 
 describe('delete a blog', () => {
     it('should delete a blog from the existent list', async () => {
-        const response = await api.get('/api/blogs');
-        const id = response.body[1].id;
-        expect(response.body).toHaveLength(helper.initialBlogList.length);
+        const blogList = await helper.blogsInDb()
+        const id = blogList[1].id;
+        expect(blogList).toHaveLength(helper.initialBlogList.length);
         await api
         .delete(`/api/blogs/${id}`)
         .expect(204)
+        const updatedBlogs = await helper.blogsInDb()
+        expect(updatedBlogs).toHaveLength(helper.initialBlogList.length - 1)
+    });
+})
+
+describe('get request', () => {
+    it('should return a blog document if the id provided exists', async () => {
+        const blogList = await helper.blogsInDb()
+        const id = blogList[0].id;
+        const element = await api
+            .get(`/api/blogs/${id}`)
+            .expect(201)
+    
+        expect(element.body.title).toBe(blogList[0].title)
+    })
+})
+
+describe('put request', () => {
+    it('should update element in DB', async () => {
+        const updateBlog = {
+            url: 'updatedURL'
+        }
+        const blogList = await helper.blogsInDb()
+        const id = blogList[0].id;
+        await api
+            .put(`/api/blogs/${id}`)
+            .send(updateBlog)
+            .expect(201)
+        const updatedBlogList = await helper.blogsInDb()
+        expect(updatedBlogList[0].url).toBe(updateBlog.url)
     })
 })
 
