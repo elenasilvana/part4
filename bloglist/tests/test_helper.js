@@ -3,6 +3,12 @@ const Blog = require('../models/blogs');
 const User = require('../models/users');
 const initialBlogList = blogs.slice(0,2);
 
+const getBlogList = (id) =>  initialBlogList.map((blog) => {
+  return { ...blog, userID: id, user: id
+  }
+
+})
+
 const nonExistingId = async () => {
   const blog = new Blog({ title: 'willremovethissoon', author: 'me' });
   await blog.save()
@@ -22,5 +28,5 @@ const usersInDb = async () => {
 }
 
 module.exports = {
-    initialBlogList, nonExistingId, blogsInDb, usersInDb
+    initialBlogList, nonExistingId, blogsInDb, usersInDb, getBlogList
 }

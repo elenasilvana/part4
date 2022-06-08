@@ -40,7 +40,7 @@ describe('when there is initially one user in db', () => {
     await api
       .post('/api/users')
       .send(newUser)
-      .expect(200)
+      .expect(201)
       .expect('Content-Type', /application\/json/);
 
     const usersAtEnd = await helper.usersInDb();
@@ -80,7 +80,7 @@ describe('when there is initially one user in db', () => {
       .post('/api/users')
       .send(newUser)
       .expect(400)
-      .expect('username already exists');
+      .expect({ error: 'username already exists' });
 
     const usersAtEnd = await helper.usersInDb();
     expect(usersAtEnd).toHaveLength(usersAtStart.length);
@@ -89,9 +89,6 @@ describe('when there is initially one user in db', () => {
   it('should return existent users', async () => {
     const usersAtStart = await helper.usersInDb();
     const users = await api.get('/api/users');
-
-    //console.log('usersCall', users.body)
-//    console.log('usersHelper', usersAtStart)
 
     expect(users.body[0]).toHaveProperty('blogs');
     expect(users.body.length).toBe(usersAtStart.length);

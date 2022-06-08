@@ -20,19 +20,10 @@ const generateUsers = async () => {
 beforeEach(async () => {
   await generateUsers();
   const userList = await helper.usersInDb();
-  await Blog.deleteMany({});
 
-  let blogObject = new Blog({
-    ...helper.initialBlogList[0],
-    userID: userList[0].id,
-  });
-  await blogObject.save();
+  await Blog.deleteMany({})
+	await Blog.insertMany(helper.getBlogList(userList[0].id))
 
-  blogObject = new Blog({
-    ...helper.initialBlogList[1],
-    userID: userList[0].id,
-  });
-  await blogObject.save();
 });
 
 test('blogs are returned as json', async () => {
@@ -40,8 +31,6 @@ test('blogs are returned as json', async () => {
     .get('/api/blogs')
     .expect(200)
     .expect('Content-Type', /application\/json/);
-
-  //console.log('///////////////////blogs', blogs.body);
 });
 
 test('all blogs are returned', async () => {
@@ -49,10 +38,15 @@ test('all blogs are returned', async () => {
 
   expect(response.body).toHaveLength(helper.initialBlogList.length);
 });
-test('user returns populated blogs', async() => {
+xtest('user returns populated blogs', async() => {
+ // const blogsResponse = await api.get('/api/blogs');
+  //console.log('currentBlogs//////////', blogsResponse.body)
   const users = await api.get('/api/users');
-  console.log('user should have blogs/////////', users.body[0].blogs)
-  expect(users.body[0].blogs.length).toBe(1)
+  console.log('current User/////////', users.body[0].id)
+  await Blog.insertMany(helper.getBlogList(users.body[0].id))
+  const updatedUsers = await api.get('/api/users');
+  console.log(updatedUsers)
+  expect(updatedUsers.body[0].blogs.length).toBe(1)
 })
 
 describe('content of returned objects', () => {

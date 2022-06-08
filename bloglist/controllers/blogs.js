@@ -1,48 +1,61 @@
 const blogsRouter = require('express').Router();
 const Blog = require('../models/blogs');
 const User = require('../models/users');
+const jwt = require('jsonwebtoken');
 
-blogsRouter.get('/', async (request, response) => {
+blogsRouter.get('/', async (request, response, next) => {
   try {
-    const blogs = await Blog.find({}).populate('user');
+    const blogs = await Blog.find({}).populate('user', { username: 1, name: 1 });
     response.json(blogs);
   } catch (error) {
-    console.error(error);
+    next(error);
   }
 });
 
-blogsRouter.get('/:id', async (request, response) => {
+blogsRouter.get('/:id', async (request, response, next) => {
   const { id } = request.params;
   try {
     const blog = await Blog.findById(id);
     response.status(201).json(blog);
   } catch (error) {
-    console.log(error);
+    next(error);
   }
 });
 
-blogsRouter.post('/', async (request, response) => {
+blogsRouter.post('/', async (request, response, next) => {
   const { title, author, likes, url, userID } = request.body;
+  const { token } = request
 
-  let user = await User.findById(userID);
+  const decodedToken = jwt.verify(token, process.env.SECRET);
+  if (!decodedToken.id) {
+    return response.status(401).json({ error: 'token missing or invalid' })
+  }
+  try {
+    let user = await User.findById(decodedToken.id);
 
-  const isValid = Boolean(url && author && userID && user);
+    const isValid = Boolean(url && author && userID && user);
 
-  if (isValid) {
-    const newBlog = {
-      title,
-      url,
-      author,
-      user: user._id,
-      likes: likes || 0,
-    };
-    const blog = new Blog(newBlog);
-    const savedBlog = await blog.save();
-    user.blogs = user.blogs.concat(savedBlog.id);
-    await user.save();
-    response.status(201).json(savedBlog);
-  } else {
-    response.status(400).send('missing properties').end();
+    if (isValid) {
+      const newBlog = {
+        title,
+        url,
+        author,
+        user: user._id,
+        likes: likes || 0,
+      };
+      const blog = new Blog(newBlog);
+      const savedBlog = await blog.save();
+
+      user.blogs = user.blogs.concat(savedBlog._id);
+      const userSaved = await user.save();
+
+      response.status(201).json(savedBlog);
+    } else {
+      response.status(400).send('missing properties').end();
+    }
+
+  } catch (error) {
+    next(error)
   }
 });
 
@@ -68,5 +81,6 @@ blogsRouter.put('/:id', async (request, response) => {
     response.status(400).end();
   }
 });
+
 
 module.exports = blogsRouter;
