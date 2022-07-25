@@ -24,16 +24,11 @@ blogsRouter.get('/:id', async (request, response, next) => {
 
 blogsRouter.post('/', async (request, response, next) => {
   const { title, author, likes, url, userID } = request.body;
-  const { token } = request
+  const { user } = request
 
-  const decodedToken = jwt.verify(token, process.env.SECRET);
-  if (!decodedToken.id) {
-    return response.status(401).json({ error: 'token missing or invalid' })
-  }
   try {
-    let user = await User.findById(decodedToken.id);
 
-    const isValid = Boolean(url && author && userID && user);
+    const isValid = Boolean(url && author && user);
 
     if (isValid) {
       const newBlog = {
@@ -47,7 +42,6 @@ blogsRouter.post('/', async (request, response, next) => {
       const savedBlog = await blog.save();
 
       user.blogs = user.blogs.concat(savedBlog._id);
-      const userSaved = await user.save();
 
       response.status(201).json(savedBlog);
     } else {
@@ -61,23 +55,27 @@ blogsRouter.post('/', async (request, response, next) => {
 
 blogsRouter.delete('/:id', async (request, response) => {
   const { id } = request.params;
-  const { token } = request;
-  const decodedToken = jwt.verify(token, process.env.SECRET);
-  if (!decodedToken.id) return response.status(401).json({ error: 'token missing or invalid' })
+  const { user } = request;
+  
+  try { 
+    let blog = await Blog.findById(id)
+  
+    if (`${user._id}` === `${blog.user}`)  {
+      const noteToRemove = await Blog.findByIdAndRemove(id)
+      if (noteToRemove) {
+        return response.status(204).end()
+      }
+    } 
 
-  let user = await User.findById(decodedToken.id);
-  let blog = await Blog.findById(id)
-
-  if (`${user._id}` === `${blog.user}`)  {
-    const noteToRemove = await Blog.findByIdAndRemove(id)
-    if (noteToRemove) {
-      return response.status(204).end()
-    }
-  } else {
-    return response.status(401).json({
-      error: 'operation not allowed'
-    }).end();
+  } catch(error) {
+    return response
+					.status(401)
+					.json({
+						error: 'operation not allowed',
+					})
+					.end();
   }
+
 });
 
 blogsRouter.put('/:id', async (request, response) => {
